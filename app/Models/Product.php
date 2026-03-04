@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -75,12 +74,12 @@ class Product extends Model
         return $slug;
     }
 
-    public function getImageUrlAttribute(): string
+    public function getImageUrlAttribute(): ?string
     {
-        if ($this->image && Storage::disk('public')->exists($this->image)) {
-            return Storage::url($this->image);
+        if ($this->image) {
+            return asset('storage/' . $this->image);
         }
-        return 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image';
+        return null;
     }
 
     public function scopeActive($query)

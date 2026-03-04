@@ -105,24 +105,46 @@
                 Semua
             </a>
 
-            @foreach($categories as $cat)
+            @foreach($categoriesTree as $parentCat)
                 @php
-                    $catIcon = match($cat) {
-                        'Air Cooled Chiller' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
-                        'Linghein'           => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>',
-                        'Jianye'             => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>',
-                        'Renner'             => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+                    $isParentActive = $activeParent === $parentCat->name;
+                    // icon path per parent — default for any unknown name
+                    $catIcon = match(strtolower($parentCat->name)) {
+                        'air cooled chiller' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
+                        'linghein'           => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>',
+                        'jianye'             => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>',
+                        'renner'             => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
                         default              => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>',
                     };
                 @endphp
-                <a href="{{ route('products.index', array_filter(['category' => $cat, 'search' => $search])) }}"
-                   class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all
-                          {{ $category === $cat ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800' }}">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {!! $catIcon !!}
-                    </svg>
-                    {{ $cat }}
-                </a>
+
+                {{-- If parent has no children, it's directly clickable as a filter --}}
+                @if($parentCat->children->isEmpty())
+                    <a href="{{ route('products.index', array_filter(['category' => $parentCat->name, 'search' => $search])) }}"
+                       class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all
+                              {{ $isParentActive ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800' }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $catIcon !!}</svg>
+                        {{ $parentCat->name }}
+                    </a>
+                @else
+                    {{-- Parent tab (filters by parent + all children) --}}
+                    <a href="{{ route('products.index', array_filter(['category' => $parentCat->name, 'search' => $search])) }}"
+                       class="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all
+                              {{ $isParentActive && $category === $parentCat->name ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : ($isParentActive ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800') }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $catIcon !!}</svg>
+                        {{ $parentCat->name }}
+                    </a>
+                    {{-- Sub-category pills — only visible when this parent is active --}}
+                    @if($isParentActive)
+                        @foreach($parentCat->children as $child)
+                            <a href="{{ route('products.index', array_filter(['category' => $child->name, 'search' => $search])) }}"
+                               class="flex-shrink-0 flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
+                                      {{ $category === $child->name ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50' }}">
+                                {{ $child->name }}
+                            </a>
+                        @endforeach
+                    @endif
+                @endif
             @endforeach
 
         </div>
@@ -201,7 +223,7 @@
 
                         {{-- Image --}}
                         <a href="{{ route('products.show', $product->slug) }}" class="block relative aspect-[4/3] overflow-hidden bg-gray-50">
-                            <img src="{{ $product->image_url }}"
+                            <img src="{{ $product->image_url ?? 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image' }}"
                                  alt="{{ $product->name }}"
                                  class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                                  loading="lazy"

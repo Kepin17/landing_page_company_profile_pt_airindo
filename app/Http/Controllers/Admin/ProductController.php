@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,28 +18,32 @@ class ProductController extends Controller
 
     public function create()
     {
-        return view('admin.products.create');
+        $categoriesGrouped = Category::grouped();
+        return view('admin.products.create', compact('categoriesGrouped'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name'              => 'required|string|max:255',
-            'category'          => 'nullable|string|in:' . implode(',', \App\Models\Product::CATEGORIES),
+            'category'          => 'nullable|string|max:150',
             'short_description' => 'nullable|string|max:300',
             'description'       => 'required|string',
             'specifications'    => 'nullable|array',
-            'specifications.*.label' => 'required_with:specifications|string|max:100',
-            'specifications.*.value' => 'required_with:specifications|string|max:255',
+            'specifications.*.label'     => 'nullable|string|max:100',
+            'specifications.*.value'     => 'nullable|string|max:500',
+            'specifications.*.is_header' => 'nullable',
             'image'             => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'shopee_link'       => 'nullable|url|max:500',
             'tokopedia_link'    => 'nullable|url|max:500',
         ]);
 
-        // Filter out empty spec rows
+        // Filter out completely empty rows (keep header rows with label only)
         if (!empty($validated['specifications'])) {
             $validated['specifications'] = array_values(
-                array_filter($validated['specifications'], fn($s) => !empty($s['label']) && !empty($s['value']))
+                array_filter($validated['specifications'], function ($s) {
+                    return !empty($s['label']);
+                })
             );
             if (empty($validated['specifications'])) {
                 $validated['specifications'] = null;
@@ -64,28 +69,32 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        return view('admin.products.edit', compact('product'));
+        $categoriesGrouped = Category::grouped();
+        return view('admin.products.edit', compact('product', 'categoriesGrouped'));
     }
 
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
             'name'              => 'required|string|max:255',
-            'category'          => 'nullable|string|in:' . implode(',', \App\Models\Product::CATEGORIES),
+            'category'          => 'nullable|string|max:150',
             'short_description' => 'nullable|string|max:300',
             'description'       => 'required|string',
             'specifications'    => 'nullable|array',
-            'specifications.*.label' => 'required_with:specifications|string|max:100',
-            'specifications.*.value' => 'required_with:specifications|string|max:255',
+            'specifications.*.label'     => 'nullable|string|max:100',
+            'specifications.*.value'     => 'nullable|string|max:500',
+            'specifications.*.is_header' => 'nullable',
             'image'             => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'shopee_link'       => 'nullable|url|max:500',
             'tokopedia_link'    => 'nullable|url|max:500',
         ]);
 
-        // Filter out empty spec rows
+        // Filter out completely empty rows (keep header rows with label only)
         if (!empty($validated['specifications'])) {
             $validated['specifications'] = array_values(
-                array_filter($validated['specifications'], fn($s) => !empty($s['label']) && !empty($s['value']))
+                array_filter($validated['specifications'], function ($s) {
+                    return !empty($s['label']);
+                })
             );
             if (empty($validated['specifications'])) {
                 $validated['specifications'] = null;

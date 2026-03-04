@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,18 @@ class ProductController extends Controller
         $search   = trim($request->input('search', ''));
         $category = $request->input('category', '');
 
+        // Build a list of category names to filter by:
+        // If the selected category is a parent, include all its children too.
+        $filterNames = [];
+        if ($category !== '') {
+            $filterNames[] = $category;
+            $parentMatch = Category::where('name', $category)->whereNull('parent_id')->first();
+            if ($parentMatch) {
+                $childNames = $parentMatch->children()->pluck('name')->toArray();
+                $filterNames = array_merge($filterNames, $childNames);
+            }
+        }
+
         $products = Product::active()
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($sub) use ($search) {
@@ -20,14 +33,32 @@ class ProductController extends Controller
                         ->orWhere('short_description', 'like', "%{$search}%");
                 });
             })
-            ->when($category !== '', fn($q) => $q->where('category', $category))
+            ->when($filterNames !== [], fn($q) => $q->whereIn('category', $filterNames))
             ->latest()
             ->paginate(12)
             ->withQueryString();
 
-        $categories = \App\Models\Product::CATEGORIES;
+        // Pass the full tree so the view can render grouped tabs and detect active parent
+        $categoriesTree = Category::tree();
 
-        return view('products.index', compact('products', 'search', 'category', 'categories'));
+        // Determine which parent tab should be highlighted
+        $activeParent = '';
+        if ($category !== '') {
+            foreach ($categoriesTree as $parent) {
+                if ($parent->name === $category) {
+                    $activeParent = $parent->name;
+                    break;
+                }
+                foreach ($parent->children as $child) {
+                    if ($child->name === $category) {
+                        $activeParent = $parent->name;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return view('products.index', compact('products', 'search', 'category', 'categoriesTree', 'activeParent'));
     }
 
     public function show(string $slug)

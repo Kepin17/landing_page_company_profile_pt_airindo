@@ -104,6 +104,25 @@
                     </span>
                 </a>
 
+                <a href="{{ route('admin.categories.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group
+                          {{ request()->routeIs('admin.categories.*')
+                              ? 'text-white'
+                              : 'hover:text-white' }}"
+                   style="{{ request()->routeIs('admin.categories.*')
+                       ? 'background:linear-gradient(135deg,#2563eb,#4f46e5); box-shadow:0 4px 14px rgba(37,99,235,0.35); color:#fff;'
+                       : 'color:#64748b;' }}">
+                    <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                    <span>Kategori</span>
+                    <span class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                          style="{{ request()->routeIs('admin.categories.*') ? 'background:rgba(255,255,255,0.2); color:#fff;' : 'background:rgba(255,255,255,0.06); color:#475569;' }}">
+                        {{ \App\Models\Category::count() }}
+                    </span>
+                </a>
+
                 {{-- Divider --}}
                 <div class="my-4" style="border-top:1px solid rgba(255,255,255,0.06);"></div>
 

@@ -178,9 +178,17 @@
                         </a>
 
                         {{-- Mega-panel --}}
-                        <div class="mega-panel absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[800px] rounded-2xl shadow-2xl
+                        @php
+                            $navCategories = \App\Models\Category::tree();
+                            $totalCats     = $navCategories->count();
+                            $perRow        = min($totalCats, 4);
+                            $colPct        = $perRow > 0 ? floor(100 / $perRow) : 100;
+                            $panelPx       = max(520, $perRow * 210);
+                        @endphp
+                        <div class="mega-panel absolute top-full left-1/2 -translate-x-1/2 mt-3 rounded-2xl shadow-2xl
                                     opacity-0 invisible group-hover/prod:opacity-100 group-hover/prod:visible
-                                    -translate-y-2 group-hover/prod:translate-y-0 transition-all duration-200 z-50">
+                                    -translate-y-2 group-hover/prod:translate-y-0 transition-all duration-200 z-50"
+                             style="width: min({{ $panelPx }}px, 90vw);">
 
                             {{-- Panel header --}}
                             <div class="px-6 pt-5 pb-4 border-b border-white/5 flex items-center justify-between">
@@ -197,76 +205,38 @@
                                 </a>
                             </div>
 
-                            <div class="grid grid-cols-4 gap-0 p-5">
-
-                                {{-- Col 1 --}}
-                                <div class="pr-5 border-r border-white/5">
-                                    <p class="mega-col-title">Air Cooled Chiller</p>
-                                    @foreach([
-                                        'Industrial Chiller (Economical Design)',
-                                        'Environmental Industrial Chiller',
-                                        'Screw Chiller',
-                                        'Packaged Low Temperature Chiller',
-                                        'Low Temperature Screw Chiller',
-                                        'Laser Chiller',
-                                        'Heating And Cooling Chiller',
-                                        'Plating Chiller',
-                                        'Oil Chiller',
-                                        'Mold Temperature Controller',
-                                        'Cooling Tower',
-                                    ] as $item)
-                                        <a href="{{ route('products.index', ['category' => 'Air Cooled Chiller', 'search' => $item]) }}"
-                                           class="mega-item">{{ $item }}</a>
-                                    @endforeach
+                            {{-- Columns: max 4 per row, extras wrap to a new row --}}
+                            <div class="flex flex-wrap p-4">
+                                @foreach($navCategories as $parentCat)
+                                @php
+                                    $isLastInRow = ($loop->index + 1) % $perRow === 0 || $loop->last;
+                                    $isFirstInRow = $loop->index % $perRow === 0;
+                                @endphp
+                                <div class="py-2"
+                                     style="width: {{ $colPct }}%;
+                                            padding-left: {{ $isFirstInRow ? '0' : '1rem' }};
+                                            padding-right: {{ $isLastInRow ? '0' : '1rem' }};
+                                            {{ !$isLastInRow ? 'border-right: 1px solid rgba(255,255,255,0.06);' : '' }}
+                                            {{ !$loop->first && $isFirstInRow ? 'border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem; margin-top: 0.5rem;' : '' }}">
+                                    <p class="mega-col-title">{{ $parentCat->name }}</p>
+                                    @if($parentCat->children->count())
+                                        <div style="max-height: 260px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(99,102,241,.35) transparent; padding-right: 2px;">
+                                            @foreach($parentCat->children as $child)
+                                                <a href="{{ route('products.index', ['category' => $child->name]) }}"
+                                                   class="mega-item">{{ $child->name }}</a>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <a href="{{ route('products.index', ['category' => $parentCat->name]) }}"
+                                           class="mega-item flex items-center gap-1.5 font-medium text-slate-300 hover:text-blue-300">
+                                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                            Lihat Semua Produk
+                                        </a>
+                                    @endif
                                 </div>
-
-                                {{-- Col 2 --}}
-                                <div class="px-5 border-r border-white/5">
-                                    <p class="mega-col-title">Linghein</p>
-                                    <a href="{{ route('products.index', ['category' => 'Linghein']) }}"
-                                       class="mega-item flex items-center gap-1.5 font-medium text-slate-300 hover:text-blue-300">
-                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                        </svg>
-                                        Lihat Semua Produk
-                                    </a>
-                                </div>
-
-                                {{-- Col 3 --}}
-                                <div class="px-5 border-r border-white/5">
-                                    <p class="mega-col-title">Jianye</p>
-                                    @foreach([
-                                        'Screw Air Compressor',
-                                        'Piston Air Compressor',
-                                        'Air Tank',
-                                        'Air Dryer',
-                                        'Air Filter',
-                                        'After Cooler',
-                                        'Replacement',
-                                    ] as $item)
-                                        <a href="{{ route('products.index', ['category' => 'Jianye', 'search' => $item]) }}"
-                                           class="mega-item">{{ $item }}</a>
-                                    @endforeach
-                                </div>
-
-                                {{-- Col 4 --}}
-                                <div class="pl-5">
-                                    <p class="mega-col-title">Renner</p>
-                                    @foreach([
-                                        'Screw Compressors',
-                                        'Frequency Control',
-                                        'Oilfree Compressors',
-                                        'Piston Compressors',
-                                        'Screw Booster',
-                                        'Air Treatment',
-                                        'Electronic Controls',
-                                        'Heat Recovery',
-                                    ] as $item)
-                                        <a href="{{ route('products.index', ['category' => 'Renner', 'search' => $item]) }}"
-                                           class="mega-item">{{ $item }}</a>
-                                    @endforeach
-                                </div>
-
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -314,11 +284,10 @@
                     </div>
 
                     <!-- CTA -->
-                    <a href="{{ url('/') }}#contact"
-                       class="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-blue-900/40">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    <a href="https://wa.me/622163870678" target="_blank" rel="noopener"
+                       class="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
                         Hubungi Kami
                     </a>
@@ -370,69 +339,39 @@
                         </svg>
                     </button>
                     <div id="mob-products" class="hidden mt-1 space-y-0.5 pl-2">
-
-                        {{-- Air Cooled Chiller --}}
-                        <button onclick="toggleMobile('mob-acc')"
-                                class="mob-link w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-blue-400">
-                            <span>Air Cooled Chiller</span>
-                            <svg id="mob-acc-icon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="mob-acc" class="hidden pl-3 space-y-0.5">
-                            @foreach(['Industrial Chiller (Economical Design)','Environmental Industrial Chiller','Screw Chiller','Packaged Low Temperature Chiller','Low Temperature Screw Chiller','Laser Chiller','Heating And Cooling Chiller','Plating Chiller','Oil Chiller','Mold Temperature Controller','Cooling Tower'] as $item)
-                                <a href="{{ route('products.index', ['category' => 'Air Cooled Chiller', 'search' => $item]) }}"
-                                   class="mob-link block px-4 py-2 text-xs">{{ $item }}</a>
-                            @endforeach
-                        </div>
-
-                        {{-- Linghein --}}
-                        <a href="{{ route('products.index', ['category' => 'Linghein']) }}"
-                           class="mob-link flex items-center px-4 py-2 text-xs font-semibold text-blue-400">Linghein</a>
-
-                        {{-- Jianye --}}
-                        <button onclick="toggleMobile('mob-jianye')"
-                                class="mob-link w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-blue-400">
-                            <span>Jianye</span>
-                            <svg id="mob-jianye-icon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="mob-jianye" class="hidden pl-3 space-y-0.5">
-                            @foreach(['Screw Air Compressor','Piston Air Compressor','Air Tank','Air Dryer','Air Filter','After Cooler','Replacement'] as $item)
-                                <a href="{{ route('products.index', ['category' => 'Jianye', 'search' => $item]) }}"
-                                   class="mob-link block px-4 py-2 text-xs">{{ $item }}</a>
-                            @endforeach
-                        </div>
-
-                        {{-- Renner --}}
-                        <button onclick="toggleMobile('mob-renner')"
-                                class="mob-link w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-blue-400">
-                            <span>Renner</span>
-                            <svg id="mob-renner-icon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="mob-renner" class="hidden pl-3 space-y-0.5">
-                            @foreach(['Screw Compressors','Frequency Control','Oilfree Compressors','Piston Compressors','Screw Booster','Air Treatment','Electronic Controls','Heat Recovery'] as $item)
-                                <a href="{{ route('products.index', ['category' => 'Renner', 'search' => $item]) }}"
-                                   class="mob-link block px-4 py-2 text-xs">{{ $item }}</a>
-                            @endforeach
-                        </div>
-
+                        @php $navCategories = \App\Models\Category::tree(); @endphp
+                        @foreach($navCategories as $parentCat)
+                            @if($parentCat->children->count())
+                                <button onclick="toggleMobile('mob-cat-{{ $parentCat->id }}')"
+                                        class="mob-link w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-blue-400">
+                                    <span>{{ $parentCat->name }}</span>
+                                    <svg id="mob-cat-{{ $parentCat->id }}-icon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <div id="mob-cat-{{ $parentCat->id }}" class="hidden pl-3 space-y-0.5">
+                                    @foreach($parentCat->children as $child)
+                                        <a href="{{ route('products.index', ['category' => $child->name]) }}"
+                                           class="mob-link block px-4 py-2 text-xs">{{ $child->name }}</a>
+                                    @endforeach
+                                </div>
+                            @else
+                                <a href="{{ route('products.index', ['category' => $parentCat->name]) }}"
+                                   class="mob-link flex items-center px-4 py-2 text-xs font-semibold text-blue-400">{{ $parentCat->name }}</a>
+                            @endif
+                        @endforeach
                     </div>
                 </div>
 
                 <a href="{{ url('/') }}#contact" class="mob-link flex items-center px-4 py-2.5 text-sm font-medium">Contact</a>
 
                 <div class="pt-3 mt-1 border-t border-white/[0.06]">
-                    <a href="{{ url('/') }}#contact"
-                       class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    <a href="https://wa.me/622163870678" target="_blank" rel="noopener"
+                       class="flex items-center justify-center gap-2 w-full px-4 py-3 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-500 transition-colors">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
-                        Hubungi Kami
+                        Hubungi Kami via WhatsApp
                     </a>
                 </div>
 
@@ -465,7 +404,7 @@
                         <a href="#" class="w-9 h-9 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-pink-600 transition-colors" aria-label="Instagram">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                         </a>
-                        <a href="#" class="w-9 h-9 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors" aria-label="WhatsApp">
+                        <a href="https://wa.me/622163870678" target="_blank" rel="noopener" class="w-9 h-9 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors" aria-label="WhatsApp">  
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                         </a>
                     </div>
@@ -580,5 +519,18 @@
     </script>
 
     @stack('scripts')
+
+    <!-- ─── Floating WhatsApp Button ──────────────── -->
+    <a href="https://wa.me/622163870678" target="_blank" rel="noopener" aria-label="Chat di WhatsApp"
+       class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-green-500 hover:bg-green-400 text-white rounded-full shadow-2xl shadow-green-900/50 transition-all duration-300 hover:scale-110 group">
+        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        {{-- Tooltip --}}
+        <span class="absolute right-16 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+            Chat WhatsApp
+        </span>
+    </a>
+    <!-- ─── End Floating WhatsApp ──────────────── -->
 </body>
 </html>

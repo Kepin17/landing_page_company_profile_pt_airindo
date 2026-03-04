@@ -44,20 +44,67 @@
             </div>
 
             {{-- Category --}}
-            <div>
-                <label for="category" class="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Kategori
-                </label>
-                <select name="category" id="category"
-                        class="w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all
-                               {{ $errors->has('category') ? 'border-red-400 bg-red-50' : 'border-gray-200' }}">
-                    <option value="">-- Pilih Kategori --</option>
-                    @foreach(\App\Models\Product::CATEGORIES as $cat)
-                        <option value="{{ $cat }}" {{ old('category') === $cat ? 'selected' : '' }}>
-                            {{ $cat }}
-                        </option>
-                    @endforeach
-                </select>
+            <div x-data="categoryDropdown('{{ old('category') }}')" class="relative">
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Kategori</label>
+                <input type="hidden" name="category" :value="selected">
+
+                {{-- Trigger button --}}
+                <button type="button" @click="open = !open"
+                        class="w-full px-4 py-3 border rounded-xl text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all
+                               {{ $errors->has('category') ? 'border-red-400 bg-red-50' : 'border-gray-200' }} bg-white">
+                    <span x-text="selected || '-- Pilih Kategori --'" :class="selected ? 'text-gray-800' : 'text-gray-400'"></span>
+                    <svg class="w-4 h-4 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                {{-- Dropdown panel --}}
+                <div x-show="open" @click.outside="open = false" x-transition
+                     class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    {{-- Search input --}}
+                    <div class="p-2 border-b border-gray-100">
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <input type="text" x-model="search" @keydown.escape="open = false"
+                                   placeholder="Cari kategori..." autofocus
+                                   class="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400">
+                        </div>
+                    </div>
+                    {{-- Options list --}}
+                    <div class="max-h-52 overflow-y-auto">
+                        {{-- Clear option --}}
+                        <div x-show="!search" @click="select('')"
+                             class="px-4 py-2 text-sm text-gray-400 italic cursor-pointer hover:bg-gray-50">
+                            -- Tidak ada kategori --
+                        </div>
+                        @foreach($categoriesGrouped as $parent => $children)
+                            {{-- Parent header --}}
+                            <div x-show="matchGroup('{{ $parent }}', {{ json_encode($children) }})"
+                                 class="px-3 py-1 text-xs font-bold text-blue-600 uppercase tracking-wide bg-blue-50 border-t border-blue-100 first:border-t-0">
+                                {{ $parent }}
+                            </div>
+                            @if(count($children))
+                                @foreach($children as $child)
+                                <div x-show="matchItem('{{ $child }}')" @click="select('{{ $child }}')"
+                                     class="px-5 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                                     :class="selected === '{{ $child }}' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700'">
+                                    {{ $child }}
+                                </div>
+                                @endforeach
+                            @else
+                                {{-- Parent with no children is itself selectable --}}
+                                <div x-show="matchItem('{{ $parent }}')" @click="select('{{ $parent }}')"
+                                     class="px-5 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                                     :class="selected === '{{ $parent }}' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700'">
+                                    {{ $parent }}
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+
                 @error('category')
                     <p class="mt-1.5 text-xs text-red-500 flex items-center space-x-1">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -113,20 +160,70 @@
                     Spesifikasi Teknis
                     <span class="text-gray-400 font-normal">(opsional)</span>
                 </label>
+
+                {{-- Import from Excel --}}
+                <div class="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/40 overflow-hidden">
+                    <button type="button" onclick="togglePastePanel(this)"
+                            class="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-indigo-50/80 transition-colors">
+                        <span class="text-xs font-semibold text-indigo-700 flex items-center space-x-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <span>Import Spesifikasi dari Excel / Tabel</span>
+                        </span>
+                        <svg class="w-4 h-4 text-indigo-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="paste-panel" class="hidden px-4 pb-4 border-t border-indigo-100">
+                        <p class="text-xs text-gray-500 mt-3 mb-2 leading-relaxed">
+                            Salin tabel dari <strong>Excel / Google Sheets</strong>, lalu tempel di sini dan klik <strong>Parse</strong>.<br>
+                            • Kolom 1 = Label &nbsp;|&nbsp; Kolom 2+ = Nilai (digabung dengan " / " otomatis)<br>
+                            • Jika baris hanya punya 1 kolom (tanpa nilai) → otomatis jadi <span class="text-purple-600 font-semibold">Judul Bagian</span>
+                        </p>
+                        <textarea id="paste-input" rows="7"
+                                  placeholder="Contoh (tab-separated dari Excel):&#10;Refrigerant&#10;Type&#9;R22&#10;Control&#9;Thermostatic expansion valve&#10;Compressor&#10;Power (kw)&#9;2.7&#9;3.5&#9;4.55&#9;5.25&#10;Nominal Cooling Capacity (kcal/h)&#9;6803&#9;10449&#9;11920&#9;13091"
+                                  class="w-full font-mono text-xs px-3 py-2.5 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white resize-y"></textarea>
+                        <div class="flex gap-2 mt-2">
+                            <button type="button" onclick="parseAndAddSpecs()"
+                                    class="inline-flex items-center space-x-1.5 px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                <span>Parse & Tambahkan</span>
+                            </button>
+                            <button type="button" onclick="document.getElementById('paste-input').value=''"
+                                    class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
+                                Bersihkan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Spec Rows --}}
                 <div class="rounded-xl border border-gray-200 overflow-hidden">
                     <div class="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
-                        <p class="text-xs text-gray-500 font-medium">Tambahkan label & nilai spesifikasi</p>
-                        <button type="button" onclick="addSpecRow()"
-                                class="inline-flex items-center space-x-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            <span>Tambah Baris</span>
-                        </button>
+                        <p class="text-xs text-gray-500 font-medium">Baris spesifikasi</p>
+                        <div class="flex items-center space-x-3">
+                            <button type="button" onclick="addHeaderRow()"
+                                    class="inline-flex items-center space-x-1 text-xs font-semibold text-purple-600 hover:text-purple-800 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span>+ Judul Bagian</span>
+                            </button>
+                            <span class="text-gray-300">|</span>
+                            <button type="button" onclick="addSpecRow()"
+                                    class="inline-flex items-center space-x-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span>+ Baris Data</span>
+                            </button>
+                        </div>
                     </div>
                     <div id="spec-rows" class="divide-y divide-gray-100">
                         <div class="spec-row flex items-center gap-2 p-3">
-                            <input type="text" name="specifications[0][label]" placeholder="Label (cth: Daya)" required
+                            <input type="hidden" name="specifications[0][is_header]" value="0">
+                            <input type="text" name="specifications[0][label]" placeholder="Label (cth: Daya)"
                                    class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
-                            <input type="text" name="specifications[0][value]" placeholder="Nilai (cth: 1000W)" required
+                            <input type="text" name="specifications[0][value]" placeholder="Nilai (cth: 1000W)"
                                    class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
                             <button type="button" onclick="removeSpecRow(this)"
                                     class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
@@ -135,10 +232,10 @@
                         </div>
                     </div>
                     <div id="spec-empty" class="hidden px-4 py-6 text-center text-sm text-gray-400">
-                        Belum ada spesifikasi. Klik tombol di atas untuk menambahkan.
+                        Belum ada spesifikasi. Tambahkan baris atau gunakan fitur import di atas.
                     </div>
                 </div>
-                <p class="text-xs text-gray-400 mt-1.5">Baris pertama akan kosong jika tidak diisi, tambahkan baris lain sesuai kebutuhan.</p>
+                <p class="text-xs text-gray-400 mt-1.5">Untuk nilai multi-model, gunakan format: <code class="bg-gray-100 px-1 rounded text-gray-600">6803 / 10449 / 11920 / 13091</code></p>
             </div>
 
             {{-- Image Upload --}}
@@ -239,6 +336,23 @@
 
 @push('scripts')
 <script>
+    function categoryDropdown(initial) {
+        return {
+            open: false,
+            selected: initial || '',
+            search: '',
+            select(val) { this.selected = val; this.open = false; this.search = ''; },
+            matchItem(name) {
+                return !this.search || name.toLowerCase().includes(this.search.toLowerCase());
+            },
+            matchGroup(parent, children) {
+                if (!this.search) return true;
+                const q = this.search.toLowerCase();
+                return parent.toLowerCase().includes(q) || children.some(c => c.toLowerCase().includes(q));
+            },
+        };
+    }
+
     function previewImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -257,16 +371,67 @@
 
     let specIndex = 1;
 
-    function addSpecRow() {
+    function togglePastePanel(btn) {
+        const panel = document.getElementById('paste-panel');
+        const chevron = btn.querySelector('svg:last-child');
+        panel.classList.toggle('hidden');
+        chevron.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+    }
+
+    function parseAndAddSpecs() {
+        const raw = document.getElementById('paste-input').value.trim();
+        if (!raw) return;
+        const lines = raw.split('\n');
+        let added = 0;
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            const parts = line.split('\t');
+            const label = (parts[0] || '').trim();
+            if (!label) return;
+            const valueParts = parts.slice(1).map(v => v.trim()).filter(v => v !== '');
+            const value = valueParts.join(' / ');
+            if (!value) {
+                addHeaderRow(label);
+            } else {
+                addSpecRow(label, value);
+            }
+            added++;
+        });
+        if (added > 0) {
+            document.getElementById('paste-input').value = '';
+            document.getElementById('paste-panel').classList.add('hidden');
+        }
+    }
+
+    function addHeaderRow(label = '') {
         const container = document.getElementById('spec-rows');
-        const empty = document.getElementById('spec-empty');
-        empty.classList.add('hidden');
+        document.getElementById('spec-empty').classList.add('hidden');
+        const row = document.createElement('div');
+        row.className = 'spec-row flex items-center gap-2 p-3 bg-purple-50/60';
+        row.innerHTML = `
+            <input type="hidden" name="specifications[${specIndex}][is_header]" value="1">
+            <input type="hidden" name="specifications[${specIndex}][value]" value="">
+            <span class="text-xs font-bold text-purple-500 uppercase tracking-wide whitespace-nowrap">JUDUL</span>
+            <input type="text" name="specifications[${specIndex}][label]" value="${escHtml(label)}" placeholder="Nama bagian (cth: Kompresor)"
+                   class="flex-1 px-3 py-2 border border-purple-200 bg-white rounded-lg text-sm font-semibold text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400">
+            <button type="button" onclick="removeSpecRow(this)"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>`;
+        container.appendChild(row);
+        specIndex++;
+    }
+
+    function addSpecRow(label = '', value = '') {
+        const container = document.getElementById('spec-rows');
+        document.getElementById('spec-empty').classList.add('hidden');
         const row = document.createElement('div');
         row.className = 'spec-row flex items-center gap-2 p-3';
         row.innerHTML = `
-            <input type="text" name="specifications[${specIndex}][label]" placeholder="Label (cth: Voltase)" required
+            <input type="hidden" name="specifications[${specIndex}][is_header]" value="0">
+            <input type="text" name="specifications[${specIndex}][label]" value="${escHtml(label)}" placeholder="Label (cth: Voltase)"
                    class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
-            <input type="text" name="specifications[${specIndex}][value]" placeholder="Nilai (cth: 220V)" required
+            <input type="text" name="specifications[${specIndex}][value]" value="${escHtml(value)}" placeholder="Nilai (cth: 220V / 380V / 415V)"
                    class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400">
             <button type="button" onclick="removeSpecRow(this)"
                     class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0">
@@ -277,12 +442,14 @@
     }
 
     function removeSpecRow(btn) {
-        const row = btn.closest('.spec-row');
-        row.remove();
-        const rows = document.querySelectorAll('.spec-row');
-        if (rows.length === 0) {
+        btn.closest('.spec-row').remove();
+        if (document.querySelectorAll('.spec-row').length === 0) {
             document.getElementById('spec-empty').classList.remove('hidden');
         }
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 </script>
 @endpush

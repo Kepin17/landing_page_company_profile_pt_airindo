@@ -4,7 +4,7 @@
 
     {{-- Product Image --}}
     <a href="{{ route('products.show', $product->slug) }}" class="block relative overflow-hidden bg-gray-50 aspect-[4/3]">
-        <img src="{{ $product->image_url }}"
+        <img src="{{ $product->image_url ?? 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image' }}"
              alt="{{ $product->name }}"
              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
              loading="lazy"

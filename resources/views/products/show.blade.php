@@ -29,7 +29,7 @@
             {{-- Left: Image --}}
             <div class="reveal">
                 <div class="relative rounded-3xl overflow-hidden bg-gray-100 shadow-xl aspect-[4/3]">
-                    <img src="{{ $product->image_url }}"
+                    <img src="{{ $product->image_url ?? 'https://placehold.co/800x600/e2e8f0/64748b?text=No+Image' }}"
                          alt="{{ $product->name }}"
                          class="w-full h-full object-cover"
                          onerror="this.src='https://placehold.co/800x600/e2e8f0/64748b?text=No+Image'">
@@ -68,28 +68,31 @@
                 {{-- Divider --}}
                 <div class="w-16 h-1 bg-blue-600 rounded-full"></div>
 
-                {{-- Quick specs preview (first 3) --}}
+                {{-- Quick specs preview (first 4 data rows, skip headers) --}}
                 @if(!empty($product->specifications))
+                    @php
+                        $dataSpecs = array_values(array_filter($product->specifications, fn($s) => empty($s['is_header']) && !empty($s['label']) && !empty($s['value'])));
+                    @endphp
+                    @if(!empty($dataSpecs))
                     <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 space-y-3">
                         <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Spesifikasi Utama</p>
-                        @foreach(array_slice($product->specifications, 0, 4) as $spec)
-                            @if(!empty($spec['label']) && !empty($spec['value']))
-                                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                                    <span class="text-sm text-gray-500 font-medium">{{ $spec['label'] }}</span>
-                                    <span class="text-sm font-semibold text-gray-800 text-right max-w-[55%]">{{ $spec['value'] }}</span>
-                                </div>
-                            @endif
+                        @foreach(array_slice($dataSpecs, 0, 4) as $spec)
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                <span class="text-sm text-gray-500 font-medium">{{ $spec['label'] }}</span>
+                                <span class="text-sm font-semibold text-gray-800 text-right max-w-[55%]">{{ $spec['value'] }}</span>
+                            </div>
                         @endforeach
-                        @if(count($product->specifications) > 4)
+                        @if(count($dataSpecs) > 4)
                             <a href="#spesifikasi"
                                class="inline-flex items-center space-x-1 text-blue-600 text-xs font-semibold hover:underline mt-1">
-                                <span>Lihat semua {{ count($product->specifications) }} spesifikasi</span>
+                                <span>Lihat semua {{ count($dataSpecs) }} spesifikasi</span>
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </a>
                         @endif
                     </div>
+                    @endif
                 @endif
 
                 {{-- Buy Buttons --}}
@@ -203,7 +206,13 @@
                         <table class="w-full text-sm">
                             <tbody class="divide-y divide-gray-100">
                                 @foreach($product->specifications as $i => $spec)
-                                    @if(!empty($spec['label']) && !empty($spec['value']))
+                                    @if(!empty($spec['is_header']) && !empty($spec['label']))
+                                        <tr>
+                                            <td colspan="2" class="px-6 py-3 bg-gray-800 text-white text-xs font-bold uppercase tracking-wider">
+                                                {{ $spec['label'] }}
+                                            </td>
+                                        </tr>
+                                    @elseif(!empty($spec['label']) && !empty($spec['value']))
                                         <tr class="{{ $i % 2 === 0 ? 'bg-white' : 'bg-gray-50' }} hover:bg-blue-50/30 transition-colors">
                                             <td class="px-6 py-4 font-semibold text-gray-700 w-2/5 border-r border-gray-100">
                                                 {{ $spec['label'] }}

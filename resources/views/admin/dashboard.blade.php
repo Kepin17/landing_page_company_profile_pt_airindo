@@ -93,7 +93,7 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center space-x-3">
                                     <div class="w-10 h-10 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}"
+                                        <img src="{{ $product->image_url ?? 'https://placehold.co/40x40/e2e8f0/64748b?text=?' }}" alt="{{ $product->name }}"
                                              class="w-full h-full object-cover"
                                              onerror="this.src='https://placehold.co/40x40/e2e8f0/64748b?text=?'">
                                     </div>
